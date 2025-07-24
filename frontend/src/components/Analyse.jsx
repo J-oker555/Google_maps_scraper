@@ -31,22 +31,54 @@ function getMostPopularCuisine(stats) {
   return cuisine;
 }
 
-function extractArrondissement(adresse) {
-  const match = adresse && adresse.match(/(75|69|13)(\d{3})/);
+function extractDepartement(adresse) {
+  if (!adresse) return 'Inconnu';
+  
+  // Recherche du code postal (5 chiffres)
+  const match = adresse.match(/\b(\d{5})\b/);
   if (match) {
-    const code = match[2];
-    if (match[1] === '75') return code + 'e Paris';
-    if (match[1] === '69') return code + 'e Lyon';
-    if (match[1] === '13') return code + 'e Marseille';
+    const codePostal = match[1];
+    const dept = codePostal.substring(0, 2);
+    
+    // Mapping des départements français
+    const departements = {
+      '01': 'Ain', '02': 'Aisne', '03': 'Allier', '04': 'Alpes-de-Haute-Provence',
+      '05': 'Hautes-Alpes', '06': 'Alpes-Maritimes', '07': 'Ardèche', '08': 'Ardennes',
+      '09': 'Ariège', '10': 'Aube', '11': 'Aude', '12': 'Aveyron',
+      '13': 'Bouches-du-Rhône', '14': 'Calvados', '15': 'Cantal', '16': 'Charente',
+      '17': 'Charente-Maritime', '18': 'Cher', '19': 'Corrèze', '21': 'Côte-d\'Or',
+      '22': 'Côtes-d\'Armor', '23': 'Creuse', '24': 'Dordogne', '25': 'Doubs',
+      '26': 'Drôme', '27': 'Eure', '28': 'Eure-et-Loir', '29': 'Finistère',
+      '30': 'Gard', '31': 'Haute-Garonne', '32': 'Gers', '33': 'Gironde',
+      '34': 'Hérault', '35': 'Ille-et-Vilaine', '36': 'Indre', '37': 'Indre-et-Loire',
+      '38': 'Isère', '39': 'Jura', '40': 'Landes', '41': 'Loir-et-Cher',
+      '42': 'Loire', '43': 'Haute-Loire', '44': 'Loire-Atlantique', '45': 'Loiret',
+      '46': 'Lot', '47': 'Lot-et-Garonne', '48': 'Lozère', '49': 'Maine-et-Loire',
+      '50': 'Manche', '51': 'Marne', '52': 'Haute-Marne', '53': 'Mayenne',
+      '54': 'Meurthe-et-Moselle', '55': 'Meuse', '56': 'Morbihan', '57': 'Moselle',
+      '58': 'Nièvre', '59': 'Nord', '60': 'Oise', '61': 'Orne',
+      '62': 'Pas-de-Calais', '63': 'Puy-de-Dôme', '64': 'Pyrénées-Atlantiques', '65': 'Hautes-Pyrénées',
+      '66': 'Pyrénées-Orientales', '67': 'Bas-Rhin', '68': 'Haut-Rhin', '69': 'Rhône',
+      '70': 'Haute-Saône', '71': 'Saône-et-Loire', '72': 'Sarthe', '73': 'Savoie',
+      '74': 'Haute-Savoie', '75': 'Paris', '76': 'Seine-Maritime', '77': 'Seine-et-Marne',
+      '78': 'Yvelines', '79': 'Deux-Sèvres', '80': 'Somme', '81': 'Tarn',
+      '82': 'Tarn-et-Garonne', '83': 'Var', '84': 'Vaucluse', '85': 'Vendée',
+      '86': 'Vienne', '87': 'Haute-Vienne', '88': 'Vosges', '89': 'Yonne',
+      '90': 'Territoire de Belfort', '91': 'Essonne', '92': 'Hauts-de-Seine', '93': 'Seine-Saint-Denis',
+      '94': 'Val-de-Marne', '95': 'Val-d\'Oise'
+    };
+    
+    return departements[dept] ? `${dept} - ${departements[dept]}` : `${dept} - Département ${dept}`;
   }
-  return 'Autre';
+  
+  return 'Code postal non trouvé';
 }
 
-function getArrondissementStats(restaurants) {
+function getDepartementStats(restaurants) {
   const stats = {};
   restaurants.forEach(r => {
-    const arr = extractArrondissement(r.Adresse);
-    stats[arr] = (stats[arr] || 0) + 1;
+    const dept = extractDepartement(r.Adresse);
+    stats[dept] = (stats[dept] || 0) + 1;
   });
   return stats;
 }
@@ -56,7 +88,7 @@ const Analyse = ({ restaurants }) => {
   const top5 = getTop5(restaurants);
   const cuisineStats = getCuisineStats(restaurants);
   const mostPopular = getMostPopularCuisine(cuisineStats);
-  const arrondissementStats = getArrondissementStats(restaurants);
+  const departementStats = getDepartementStats(restaurants);
   const pieData = {
     labels: Object.keys(cuisineStats),
     datasets: [
@@ -69,15 +101,20 @@ const Analyse = ({ restaurants }) => {
     ],
   };
   const barData = {
-    labels: Object.keys(arrondissementStats),
+    labels: Object.keys(departementStats),
     datasets: [
       {
         label: 'Nombre de restaurants',
-        data: Object.values(arrondissementStats),
+        data: Object.values(departementStats),
         backgroundColor: '#36A2EB',
       },
     ],
   };
+
+  // Trier les départements par nombre de restaurants (décroissant)
+  const sortedDepartements = Object.entries(departementStats)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 10); // Top 10 des départements
 
   return (
     <div className="analyse-container">
@@ -105,20 +142,73 @@ const Analyse = ({ restaurants }) => {
           <span className="most-popular-cuisine">{mostPopular}</span>
         </div>
         <div className="analyse-card">
-          <h2>Nombre de restaurants par arrondissement</h2>
-          <div style={{ maxWidth: 500, margin: '0 auto' }}>
-            <Bar data={barData} options={{
-              indexAxis: 'y',
-              plugins: { legend: { display: false } },
-              scales: {
-                x: {
-                  beginAtZero: true,
-                  precision: 0,
-                  stepSize: 1,
-                  ticks: { stepSize: 1 }
+          <h2>📍 Analyse par Département</h2>
+          <div style={{ marginBottom: '2rem' }}>
+            <h3>Top 10 des départements</h3>
+            <div className="departement-list">
+              {sortedDepartements.map(([dept, count], index) => (
+                <div key={dept} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.5rem',
+                  margin: '0.25rem 0',
+                  backgroundColor: index < 3 ? '#e3f2fd' : '#f5f5f5',
+                  borderRadius: '4px',
+                  borderLeft: index < 3 ? '4px solid #2196f3' : '4px solid #ccc'
+                }}>
+                  <span style={{ fontWeight: index < 3 ? 'bold' : 'normal' }}>
+                    {index + 1}. {dept}
+                  </span>
+                  <span style={{
+                    backgroundColor: '#2196f3',
+                    color: 'white',
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '12px',
+                    fontSize: '0.9rem'
+                  }}>
+                    {count} restaurants
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div style={{ marginTop: '2rem' }}>
+            <h3>Graphique par département</h3>
+            <div style={{ maxWidth: 600, margin: '0 auto' }}>
+              <Bar data={barData} options={{
+                indexAxis: 'y',
+                plugins: { 
+                  legend: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        return `${context.parsed.x} restaurants`;
+                      }
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    beginAtZero: true,
+                    precision: 0,
+                    stepSize: 1,
+                    ticks: { stepSize: 1 }
+                  },
+                  y: {
+                    ticks: {
+                      font: { size: 10 }
+                    }
+                  }
                 }
-              }
-            }} />
+              }} />
+            </div>
+          </div>
+          
+          <div style={{ marginTop: '2rem', textAlign: 'center', color: '#666' }}>
+            <p>📊 Total: {Object.keys(departementStats).length} départements représentés</p>
+            <p>🏪 {restaurants.length} restaurants analysés</p>
           </div>
         </div>
       </div>
