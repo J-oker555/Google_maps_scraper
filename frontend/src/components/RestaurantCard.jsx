@@ -23,21 +23,35 @@ function RestaurantCard({ restaurant }) {
         🍽️
       </div>
       <div className="restaurant-card-content">
-        <h2>{restaurant.nom}</h2>
+        <h2>{restaurant.Nom}</h2>
         <div className="restaurant-info">
           <IconLocation />
-          <span>{restaurant.adresse}</span>
+          <span>{restaurant.Adresse}</span>
         </div>
         <div className="restaurant-info">
           <IconFood />
-          <span>{restaurant.style}</span>
+          <span>{restaurant.Catégorie}</span>
         </div>
         <div className="restaurant-info">
-          <IconStar />
-          <span>{restaurant.note}</span>
+          <b>Département :</b>&nbsp;<span>{restaurant.Département}</span>
         </div>
-        {restaurant.autres && (
-          <div className="autres">{restaurant.autres}</div>
+        {restaurant.Téléphone && (
+          <div className="restaurant-info">
+            <b>Tél :</b>&nbsp;<span>{restaurant.Téléphone}</span>
+          </div>
+        )}
+        {restaurant.Site_Web && (
+          <div className="restaurant-info">
+            <a href={restaurant.Site_Web} target="_blank" rel="noopener noreferrer">Site web</a>
+          </div>
+        )}
+        {restaurant.URL && (
+          <div className="restaurant-info">
+            <a href={restaurant.URL} target="_blank" rel="noopener noreferrer">Voir sur Google Maps</a>
+          </div>
+        )}
+        {restaurant.Zone_de_recherche && (
+          <div className="autres">Zone : {restaurant.Zone_de_recherche}</div>
         )}
       </div>
     </div>

@@ -8,7 +8,7 @@ function RestaurantList({ restaurants }) {
   return (
     <div className="restaurant-list">
       {restaurants.map((resto) => (
-        <RestaurantCard key={resto.id || resto.nom} restaurant={resto} />
+        <RestaurantCard key={resto._id || resto.Nom} restaurant={resto} />
       ))}
     </div>
   );
